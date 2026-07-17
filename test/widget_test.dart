@@ -1,30 +1,38 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Basic smoke test for a screen that doesn't require Firebase to be
+// initialized (RecipeScreen only renders a plain Recipe model). Screens
+// that talk to Cloud Functions (CaptureScreen, IngredientReviewScreen)
+// need Firebase test mocks to exercise in a widget test.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:foodsnap/main.dart';
+import 'package:foodsnap/models/recipe.dart';
+import 'package:foodsnap/screens/recipe_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('RecipeScreen renders title, ingredients, and steps', (
+    WidgetTester tester,
+  ) async {
+    final recipe = Recipe(
+      title: '番茄炒蛋',
+      servings: 2,
+      ingredients: [
+        RecipeIngredient(name: '番茄', amount: '200g'),
+        RecipeIngredient(name: '雞蛋', amount: '3顆'),
+      ],
+      steps: const ['番茄切塊', '蛋液炒熟後加入番茄拌炒'],
+      totalCalories: 320,
+      notes: '可依口味加鹽調整',
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(home: RecipeScreen(recipe: recipe)),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('番茄炒蛋'), findsOneWidget);
+    expect(find.text('2 人份'), findsOneWidget);
+    expect(find.text('約 320 kcal'), findsOneWidget);
+    expect(find.text('番茄'), findsOneWidget);
+    expect(find.text('番茄切塊'), findsOneWidget);
   });
 }

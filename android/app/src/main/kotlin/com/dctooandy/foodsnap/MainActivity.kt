@@ -1,4 +1,4 @@
-package com.example.foodsnap
+package com.dctooandy.foodsnap
 
 import io.flutter.embedding.android.FlutterActivity
 
