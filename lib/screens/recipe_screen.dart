@@ -114,6 +114,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
             tooltip: '分享',
             onPressed: _share,
           ),
+          IconButton(
+            icon: const Icon(Icons.home_outlined),
+            tooltip: '回首頁',
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
         ],
       ),
       body: ListView(

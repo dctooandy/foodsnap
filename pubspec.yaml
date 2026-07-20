@@ -49,6 +49,11 @@ dependencies:
   # Camera / gallery image picking
   image_picker: ^1.1.2
 
+  # On-device object detection: pre-check the photo has food in it, and crop
+  # to the food region before sending to the Claude Vision API.
+  google_mlkit_object_detection: ^0.16.0
+  image: ^4.3.0
+
   # Sharing recipes and opening YouTube search for video reference
   share_plus: ^10.1.4
   url_launcher: ^6.3.1

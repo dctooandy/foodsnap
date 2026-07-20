@@ -103,7 +103,17 @@ class _DishNameScreenState extends State<DishNameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('選擇菜色')),
+      appBar: AppBar(
+        title: const Text('選擇菜色'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_outlined),
+            tooltip: '回首頁',
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           ListView.separated(

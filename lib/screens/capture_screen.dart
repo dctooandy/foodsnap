@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../services/auth_service.dart';
 import '../services/food_api_service.dart';
+import '../services/on_device_vision_service.dart';
 import 'achievements_screen.dart';
 import 'history_screen.dart';
 import 'ingredient_review_screen.dart';
@@ -21,7 +22,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
   final _picker = ImagePicker();
   final _api = FoodApiService();
   final _authService = AuthService();
+  final _visionService = OnDeviceVisionService();
   bool _loading = false;
+
+  @override
+  void dispose() {
+    _visionService.close();
+    super.dispose();
+  }
 
   Future<void> _pickAndAnalyze(ImageSource source) async {
     final picked = await _picker.pickImage(
@@ -33,8 +41,27 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
     setState(() => _loading = true);
     try {
-      final bytes = await picked.readAsBytes();
-      final mediaType = _mediaTypeFor(picked.path);
+      final vision = await _visionService.analyze(picked.path);
+      if (!vision.looksLikeFood) {
+        if (!mounted) return;
+        final sendAnyway = await _confirmSendAnyway();
+        if (sendAnyway != true) {
+          setState(() => _loading = false);
+          return;
+        }
+      }
+
+      var bytes = await picked.readAsBytes();
+      var mediaType = _mediaTypeFor(picked.path);
+      final foodBoundingBox = vision.foodBoundingBox;
+      if (foodBoundingBox != null) {
+        bytes = _visionService.cropToFoodRegion(
+          originalBytes: bytes,
+          boundingBox: foodBoundingBox,
+        );
+        mediaType = 'image/jpeg';
+      }
+
       final result = await _api.analyzeFood(
         imageBytes: bytes,
         mediaType: mediaType,
@@ -148,6 +175,26 @@ class _CaptureScreenState extends State<CaptureScreen> {
     if (lower.endsWith('.png')) return 'image/png';
     if (lower.endsWith('.webp')) return 'image/webp';
     return 'image/jpeg';
+  }
+
+  Future<bool?> _confirmSendAnyway() {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('沒偵測到明顯的食物'),
+        content: const Text('這張照片看起來可能沒有食物，仍要送出辨識嗎？送出會消耗一次今日的使用次數。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('重新選擇'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('仍要送出'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleSignOut() async {
