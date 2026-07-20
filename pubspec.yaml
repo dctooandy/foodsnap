@@ -41,6 +41,11 @@ dependencies:
   cloud_functions: ^5.2.0
   cloud_firestore: ^5.5.0
 
+  # Sign-in providers (used to upgrade the anonymous account without losing its uid)
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.4
+  crypto: ^3.0.3
+
   # Camera / gallery image picking
   image_picker: ^1.1.2
 

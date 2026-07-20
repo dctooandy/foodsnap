@@ -12,7 +12,20 @@
           "package_name": "com.dctooandy.foodsnap"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "649750627241-sa9hph3jrmnj880a9k4326ll6bb53klo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dctooandy.foodsnap",
+            "certificate_hash": "ade6f1f321409cd29156220f8ba33efb99542140"
+          }
+        },
+        {
+          "client_id": "649750627241-kflq91tbukeeu1c2tt3c7c2ajt138k3o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDOosqe5tmoU_ddItUnmEtbxp4WVpLTle4"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "649750627241-kflq91tbukeeu1c2tt3c7c2ajt138k3o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "649750627241-b4gqmeart5dn246glpe0nnbk24533cbq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.dctooandy.foodsnap"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +56,12 @@
           "package_name": "com.example.foodsnap"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "649750627241-kflq91tbukeeu1c2tt3c7c2ajt138k3o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDOosqe5tmoU_ddItUnmEtbxp4WVpLTle4"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "649750627241-kflq91tbukeeu1c2tt3c7c2ajt138k3o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "649750627241-b4gqmeart5dn246glpe0nnbk24533cbq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.dctooandy.foodsnap"
+              }
+            }
+          ]
         }
       }
     }

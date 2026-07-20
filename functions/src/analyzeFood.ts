@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getClaudeClient, CLAUDE_MODEL, ANTHROPIC_API_KEY } from "./claudeClient";
+import { checkAndIncrementQuota } from "./quota";
 import type { AnalyzeFoodRequest, AnalyzeFoodResult } from "./types";
 
 const RESULT_SCHEMA = {
@@ -51,6 +52,11 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // base64-decoded size guard
 export const analyzeFood = onCall<AnalyzeFoodRequest>(
   { secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 60, memory: "512MiB" },
   async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "請先登入。");
+    }
+    await checkAndIncrementQuota(request.auth.uid, request.auth.token.firebase?.sign_in_provider);
+
     const { imageBase64, mediaType, targetLanguage } = request.data ?? {};
 
     if (!imageBase64 || typeof imageBase64 !== "string") {

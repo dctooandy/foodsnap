@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
 import '../models/food_item.dart';
@@ -57,6 +58,14 @@ class _IngredientReviewScreenState extends State<IngredientReviewScreen> {
       if (!mounted) return;
       await Navigator.of(context).push<void>(
         MaterialPageRoute(builder: (_) => RecipeScreen(recipe: recipe)),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      final message = e.code == 'resource-exhausted'
+          ? (e.message ?? '今日免費次數已用完，請明天再試或登入解鎖更多次數。')
+          : '生成食譜失敗：${e.message ?? e.code}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 5)),
       );
     } catch (e) {
       if (!mounted) return;

@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getClaudeClient, CLAUDE_MODEL, ANTHROPIC_API_KEY } from "./claudeClient";
+import { checkAndIncrementQuota } from "./quota";
 import type { GenerateRecipeRequest, RecipeResult } from "./types";
 
 const RESULT_SCHEMA = {
@@ -34,6 +35,11 @@ const RESULT_SCHEMA = {
 export const generateRecipe = onCall<GenerateRecipeRequest>(
   { secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 60, memory: "512MiB" },
   async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "請先登入。");
+    }
+    await checkAndIncrementQuota(request.auth.uid, request.auth.token.firebase?.sign_in_provider);
+
     const { items, targetLanguage } = request.data ?? {};
 
     if (!Array.isArray(items) || items.length === 0) {

@@ -6,5 +6,13 @@ service cloud.firestore {
     match /users/{userId}/entries/{entryId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Daily usage counters are read-only from the client. Only Cloud
+    // Functions (Admin SDK, which bypasses these rules) may increment them —
+    // this prevents a user from resetting their own quota.
+    match /users/{userId}/usage/{date} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
   }
 }
