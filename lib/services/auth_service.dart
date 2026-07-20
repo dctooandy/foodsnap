@@ -17,6 +17,14 @@ class AuthService {
   /// quota is lower for these, and their history disappears on reinstall.
   bool get isAnonymous => _auth.currentUser?.isAnonymous ?? true;
 
+  /// Signs the current user out and immediately re-establishes an anonymous
+  /// session, since the rest of the app (Cloud Functions, Firestore rules)
+  /// assumes there is always a signed-in user.
+  Future<void> signOut() async {
+    await _auth.signOut();
+    await ensureSignedIn();
+  }
+
   Future<User> ensureSignedIn() async {
     final current = _auth.currentUser;
     if (current != null) return current;

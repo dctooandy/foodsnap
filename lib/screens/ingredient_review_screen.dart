@@ -5,17 +5,15 @@ import 'package:flutter/material.dart';
 
 import '../models/food_item.dart';
 import '../services/food_api_service.dart';
-import 'recipe_screen.dart';
+import 'dish_name_screen.dart';
 
 class IngredientReviewScreen extends StatefulWidget {
-  const IngredientReviewScreen({
-    super.key,
-    required this.initialResult,
-    required this.imageBytes,
-  });
+  const IngredientReviewScreen({super.key, this.initialResult, this.imageBytes});
 
-  final AnalyzeFoodResult initialResult;
-  final Uint8List imageBytes;
+  /// Null when the user is starting from a blank, manually-typed list
+  /// instead of a photo (see [CaptureScreen]'s "手動輸入食材" entry point).
+  final AnalyzeFoodResult? initialResult;
+  final Uint8List? imageBytes;
 
   @override
   State<IngredientReviewScreen> createState() =>
@@ -31,8 +29,15 @@ class _IngredientReviewScreenState extends State<IngredientReviewScreen> {
   @override
   void initState() {
     super.initState();
-    _items = widget.initialResult.items;
+    _items = List<FoodItem>.of(widget.initialResult?.items ?? []);
     _included = {for (var i = 0; i < _items.length; i++) i};
+  }
+
+  void _addManualItem() {
+    setState(() {
+      _items.add(FoodItem.manual(name: ''));
+      _included.add(_items.length - 1);
+    });
   }
 
   double get _totalCalories {
@@ -43,7 +48,7 @@ class _IngredientReviewScreenState extends State<IngredientReviewScreen> {
     return sum;
   }
 
-  Future<void> _generateRecipe() async {
+  Future<void> _pickDish() async {
     final chosen = [for (final i in _included) _items[i]];
     if (chosen.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -54,23 +59,28 @@ class _IngredientReviewScreenState extends State<IngredientReviewScreen> {
 
     setState(() => _generating = true);
     try {
-      final recipe = await _api.generateRecipe(items: chosen);
+      final result = await _api.suggestDishNames(items: chosen);
       if (!mounted) return;
       await Navigator.of(context).push<void>(
-        MaterialPageRoute(builder: (_) => RecipeScreen(recipe: recipe)),
+        MaterialPageRoute(
+          builder: (_) => DishNameScreen(
+            items: chosen,
+            candidates: result.candidates,
+          ),
+        ),
       );
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       final message = e.code == 'resource-exhausted'
           ? (e.message ?? '今日免費次數已用完，請明天再試或登入解鎖更多次數。')
-          : '生成食譜失敗：${e.message ?? e.code}';
+          : '取得菜名建議失敗：${e.message ?? e.code}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), duration: const Duration(seconds: 5)),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('生成食譜失敗：$e')),
+        SnackBar(content: Text('取得菜名建議失敗：$e')),
       );
     } finally {
       if (mounted) setState(() => _generating = false);
@@ -80,11 +90,31 @@ class _IngredientReviewScreenState extends State<IngredientReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('確認食材')),
+      appBar: AppBar(
+        title: const Text('確認食材'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: '手動新增食材',
+            onPressed: _addManualItem,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.separated(
+            child: _items.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        '尚未有任何食材，點右上角「+」手動新增',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                  )
+                : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _items.length,
               separatorBuilder: (_, _) => const Divider(),
@@ -123,10 +153,11 @@ class _IngredientReviewScreenState extends State<IngredientReviewScreen> {
                               );
                             },
                           ),
-                          Text(
-                            item.nameOriginal,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
+                          if (item.nameOriginal.isNotEmpty)
+                            Text(
+                              item.nameOriginal,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                         ],
                       ),
                     ),
@@ -175,7 +206,7 @@ class _IngredientReviewScreenState extends State<IngredientReviewScreen> {
                     ),
                   ),
                   FilledButton.icon(
-                    onPressed: _generating ? null : _generateRecipe,
+                    onPressed: _generating ? null : _pickDish,
                     icon: _generating
                         ? const SizedBox(
                             width: 16,
@@ -183,7 +214,7 @@ class _IngredientReviewScreenState extends State<IngredientReviewScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.menu_book),
-                    label: const Text('生成食譜'),
+                    label: const Text('選擇菜色'),
                   ),
                 ],
               ),

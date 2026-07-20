@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../services/auth_service.dart';
 import '../services/food_api_service.dart';
+import 'achievements_screen.dart';
+import 'history_screen.dart';
 import 'ingredient_review_screen.dart';
 
 class CaptureScreen extends StatefulWidget {
@@ -135,6 +137,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
+  Future<void> _openManualEntry() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const IngredientReviewScreen()),
+    );
+  }
+
   String _mediaTypeFor(String path) {
     final lower = path.toLowerCase();
     if (lower.endsWith('.png')) return 'image/png';
@@ -142,10 +150,62 @@ class _CaptureScreenState extends State<CaptureScreen> {
     return 'image/jpeg';
   }
 
+  Future<void> _handleSignOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('登出'),
+        content: const Text('登出後將以訪客身分繼續使用，每日次數會恢復成訪客額度。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('登出'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    await _authService.signOut();
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已登出')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('FoodSnap')),
+      appBar: AppBar(
+        title: const Text('FoodSnap'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: '我的紀錄',
+            onPressed: () => Navigator.of(context).push<void>(
+              MaterialPageRoute(builder: (_) => HistoryScreen()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.emoji_events_outlined),
+            tooltip: '成就',
+            onPressed: () => Navigator.of(context).push<void>(
+              MaterialPageRoute(builder: (_) => AchievementsScreen()),
+            ),
+          ),
+          if (!_authService.isAnonymous)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: '登出',
+              onPressed: _handleSignOut,
+            ),
+        ],
+      ),
       body: Column(
         children: [
           if (_authService.isAnonymous) _buildSignInBanner(context),
@@ -185,6 +245,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
                                 _pickAndAnalyze(ImageSource.gallery),
                             icon: const Icon(Icons.photo_library),
                             label: const Text('從相簿選取'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextButton.icon(
+                            onPressed: _openManualEntry,
+                            icon: const Icon(Icons.edit_note),
+                            label: const Text('手動輸入食材'),
                           ),
                         ],
                       ),

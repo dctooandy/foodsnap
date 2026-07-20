@@ -23,6 +23,7 @@ void main() {
       steps: const ['番茄切塊', '蛋液炒熟後加入番茄拌炒'],
       totalCalories: 320,
       notes: '可依口味加鹽調整',
+      category: '中式',
     );
 
     await tester.pumpWidget(

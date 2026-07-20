@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getClaudeClient, CLAUDE_MODEL, ANTHROPIC_API_KEY } from "./claudeClient";
 import { checkAndIncrementQuota } from "./quota";
+import { RECIPE_CATEGORIES } from "./types";
 import type { GenerateRecipeRequest, RecipeResult } from "./types";
 
 const RESULT_SCHEMA = {
@@ -27,8 +28,13 @@ const RESULT_SCHEMA = {
     },
     total_calories: { type: "number", description: "Estimated total calories (kcal) for the whole recipe." },
     notes: { type: "string", description: "Optional tips, substitutions, or serving suggestions." },
+    category: {
+      type: "string",
+      enum: [...RECIPE_CATEGORIES],
+      description: "The single best-fitting cuisine/dish category for this recipe.",
+    },
   },
-  required: ["title", "servings", "ingredients", "steps", "total_calories", "notes"],
+  required: ["title", "servings", "ingredients", "steps", "total_calories", "notes", "category"],
   additionalProperties: false,
 };
 
@@ -40,7 +46,7 @@ export const generateRecipe = onCall<GenerateRecipeRequest>(
     }
     await checkAndIncrementQuota(request.auth.uid, request.auth.token.firebase?.sign_in_provider);
 
-    const { items, targetLanguage } = request.data ?? {};
+    const { items, targetLanguage, dishName } = request.data ?? {};
 
     if (!Array.isArray(items) || items.length === 0) {
       throw new HttpsError("invalid-argument", "items must be a non-empty array of { name, grams }.");
@@ -55,6 +61,9 @@ export const generateRecipe = onCall<GenerateRecipeRequest>(
     const client = getClaudeClient();
 
     const ingredientList = items.map((i) => `- ${i.name}: ${i.grams}g`).join("\n");
+    const dishInstruction = dishName?.trim()
+      ? `The user has chosen to make "${dishName.trim()}". Create the full recipe for this specific dish.`
+      : `Create one practical, easy-to-follow recipe using them.`;
 
     const response = await client.messages.create({
       model: CLAUDE_MODEL,
@@ -66,8 +75,9 @@ export const generateRecipe = onCall<GenerateRecipeRequest>(
           content:
             `Using primarily these ingredients (adjust quantities as needed, and you may add a small ` +
             `number of common pantry staples like salt, oil, or water if needed):\n\n${ingredientList}\n\n` +
-            `Create one practical, easy-to-follow recipe. Write the title, ingredient list, steps, and ` +
-            `notes in ${lang}. Estimate the total calories (kcal) for the whole recipe.`,
+            `${dishInstruction} Write the title, ingredient list, steps, and notes in ${lang}. ` +
+            `Estimate the total calories (kcal) for the whole recipe, and classify it into the single ` +
+            `best-fitting category.`,
         },
       ],
     });

@@ -7,6 +7,18 @@ class FoodItem {
     required this.confidence,
   });
 
+  /// A user-typed ingredient with no AI recognition behind it — no original
+  /// (source-language) name and no estimated calories.
+  factory FoodItem.manual({required String name, double estimatedGrams = 100}) {
+    return FoodItem(
+      nameOriginal: '',
+      nameTranslated: name,
+      estimatedGrams: estimatedGrams,
+      calories: 0,
+      confidence: 'manual',
+    );
+  }
+
   factory FoodItem.fromJson(Map<String, dynamic> json) {
     return FoodItem(
       nameOriginal: json['name_original'] as String,

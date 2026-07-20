@@ -13,3 +13,6 @@ export function getClaudeClient(): Anthropic {
 }
 
 export const CLAUDE_MODEL = "claude-opus-4-8";
+
+/** Cheaper/faster model for lightweight generation (e.g. dish-name suggestions). */
+export const CLAUDE_HAIKU_MODEL = "claude-haiku-4-5";

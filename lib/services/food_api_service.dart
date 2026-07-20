@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../models/dish_name_candidate.dart';
 import '../models/food_item.dart';
 import '../models/recipe.dart';
 
@@ -35,6 +36,7 @@ class FoodApiService {
   Future<Recipe> generateRecipe({
     required List<FoodItem> items,
     String? targetLanguage,
+    String? dishName,
   }) async {
     final callable = _functions.httpsCallable(
       'generateRecipe',
@@ -49,8 +51,31 @@ class FoodApiService {
               })
           .toList(),
       'targetLanguage': ?targetLanguage,
+      'dishName': ?dishName,
     });
 
     return Recipe.fromJson(Map<String, dynamic>.from(result.data));
+  }
+
+  Future<SuggestDishNamesResult> suggestDishNames({
+    required List<FoodItem> items,
+    String? targetLanguage,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'suggestDishNames',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+    );
+
+    final result = await callable.call<Map<String, dynamic>>({
+      'items': items
+          .map((item) => {
+                'name': item.nameTranslated,
+                'grams': item.estimatedGrams,
+              })
+          .toList(),
+      'targetLanguage': ?targetLanguage,
+    });
+
+    return SuggestDishNamesResult.fromJson(Map<String, dynamic>.from(result.data));
   }
 }
